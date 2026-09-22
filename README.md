@@ -1,4 +1,4 @@
-# Qwen-Image-2.1 Prompt Guide — Agent Skills
+t-guide# Qwen-Image-2.1 Prompt Guide — Agent Skills
 
 [English](#english) 
 
@@ -50,7 +50,6 @@ skills/
 │       ├── text-rendering.md     # quoting discipline, Japanese text workaround
 │       ├── capabilities.md       # specs, ratios, CFG/negative/seed, snippets, license
 │       └── examples.md           # sourced example-prompt library
-└── qwen-image-prompt-ja/         # same structure, Japanese
 research/
 └── 2026-09-21-research-notes.md  # the underlying research (Japanese)
 ```
