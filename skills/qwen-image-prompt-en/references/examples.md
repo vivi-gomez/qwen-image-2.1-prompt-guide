@@ -1,4 +1,4 @@
-# Working example prompts
+Regarding the picture hanging in the room of the first image, keep the picture frame and replace its interior with the characters depicted in the second image. Change the font from the input gothic typeface to a semi-cursive calligraphy style, like brush writing. Finally, add a red square seal-stamp at the bottom-left edge of the picture.# Working example prompts
 
 Curated from official Qwen sources and high-signal community posts. Each is labeled with its origin. Adapt freely; keep the quoting and preserve-clause patterns intact.
 
@@ -105,8 +105,7 @@ shot on Canon EOS R5, 85mm f/1.4 lens, professional photography, RAW format
 Negative prompt that shipped with an official 2512 portrait example (keep the original Chinese string for the model; English gloss provided only for reference):
 
 ```text
-低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，
-画面具有AI感。构图混乱。文字模糊，扭曲。
+Low resolution, low image quality, deformed limbs, deformed fingers, oversaturated image, wax figure feel, faces lacking detail, overly smooth, the image has an AI feel. Chaotic composition. Blurry text, distorted.
 
 [English gloss: Low resolution, low image quality, deformed limbs, deformed
 fingers, oversaturated image, waxy look, faces lacking detail, overly smooth,
@@ -118,9 +117,7 @@ image with an AI feel. Cluttered composition. Blurred, distorted text.]
 Convert rendered text to calligraphy, tracing strokes exactly (instruction itself in Japanese is fine for the edit path):
 
 ```text
-画像に書かれたテキストを習字風のフォントに変換してください。1画ごとの配置を忠実に
-なぞり、抜け漏れがないようにしてください。左下に、赤い四角形の「通义千问」という
-印をつけてください
+Please convert the text written in the image into a calligraphy-style font. Trace the placement of every stroke faithfully, with nothing missing or left out. At the bottom left, add a red square seal reading "通义千问".
 
 [English gloss: Convert the text written in the image into a calligraphy-style
 font. Trace the placement of every stroke faithfully, with nothing missing or
@@ -130,9 +127,7 @@ left out. At the bottom left, add a red square seal reading "通义千问".]
 Composite a text image into a room picture using numbered references:
 
 ```text
-1枚目の部屋に飾られている絵について、額縁は残して、その内部を2枚目の画像で表す文字に
-置き換えてください。フォントは入力されたゴシック体ではなく、習字のような行書体に変更
-してください。最後に、赤い四角のハンコを絵の左下端に加えてください
+Regarding the picture hanging in the room of the first image, keep the picture frame and replace its interior with the characters depicted in the second image. Change the font from the input gothic typeface to a semi-cursive calligraphy style, like brush writing. Finally, add a red square seal-stamp at the bottom-left edge of the picture.
 
 [English gloss: Regarding the picture hanging in the room in the first image,
 keep the picture frame and replace its interior with the characters depicted in
