@@ -31,7 +31,7 @@ color, and perspective. Leave the background and signboard unchanged.
 
 With two or more input images, the official 2.1 rewriter makes **tag references mandatory**:
 
-- Refer to inputs as `<image1>`, `<image2>`, … — never "the first image", "image A", "图1".
+- Refer to inputs as `<image1>`, `<image2>`, … — never "the first image", "image A", "图1" [tú yī — Chinese for "figure 1"].
 - With a single input image, do *not* use tags.
 - Assign each image a role — which is the **canvas** (base to modify) and which are **donors** (supply the person, product, background, or style).
 - Spatial language still decides layout inside the canvas: "facing each other", "on the left / on the right".
@@ -57,7 +57,7 @@ Two independent language decisions — do not conflate them:
 
 - Default: **follow the input image's ratio** (`ratio_follow: "<image1>"` in the rewriter's schema). Setting `wh_ratio` and `ratio_follow` together is invalid — they are mutually exclusive.
 - Exception — "new scene generation" (photo-shoot scenes, cosplay, fresh settings): choose the ratio semantically, like generation.
-- Keyword→ratio conventions used by the official rewriter: square/avatar → 1:1, landscape/PPT → 16:9, poster → 2:3, ID photo / Xiaohongshu → 3:4, panorama → 2:1, business card → 9:5, A4 → 5:7 / 7:5, iPhone screen → 18:39, Android → 9:20, cinemascope → 21:9.
+- Keyword→ratio conventions used by the official rewriter (keywords in Chinese with English equivalents): square/avatar [正方形/头像] → 1:1, landscape/PPT [横版/PPT] → 16:9, poster [海报] → 2:3, ID photo / Xiaohongshu [证件照/小红书] → 3:4, panorama [全景] → 2:1, business card [名片] → 9:5, A4 → 5:7 / 7:5, iPhone screen → 18:39, Android → 9:20, cinemascope → 21:9.
 - "2K/4K/8K" are quality descriptors, not ratio hints — output is always ~2K; never infer a ratio from them.
 - Outpainting: infer the new ratio from the expansion direction (expect +30–50% added area).
 

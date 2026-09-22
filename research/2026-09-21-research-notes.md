@@ -1,241 +1,241 @@
-# Qwen-Image-2.1 プロンプトガイドスキル — 調査ノート（2026-09-21）
+# Qwen-Image-2.1 — Notas de investigación para una skill de guía de prompts (2026-09-21)
 
-プロンプトガイドAgent Skill作成のための一次調査まとめ。調査日: 2026-09-21（モデル公開翌日）。
+Resumen de investigación primaria para la creación de una Agent Skill de guía de prompts. Fecha de investigación: 2026-09-21 (el día después de la publicación del modelo).
 
 ---
 
-## 1. モデル概要
+## 1. Resumen del modelo
 
-- **正式名称**: Qwen-Image-2.1（表記ゆれ: "Qwen Image 2.1" / 「千问图像2.1」）
-- **開発元**: Alibaba Qwen チーム（杭州通义实验室）
-- **発表日**: **2026-09-20**（GitHub News 表記、HFライセンス文書も同日）
-- **位置づけ**: 「Qwen現最強のオープンソース画像生成モデル」。生成と編集を1モデルに統合（"小模强效，创改一体"）
-- **系譜**: Qwen-Image (2025-08, 20B, Apache 2.0) → Edit-2509 (2025-09) → Edit-2511 / Qwen-Image-2512 / Layered (2025-12) → Qwen-Image-2.0 (2026-02, API専用) → Qwen-Image-3.0/3.0-Pro (2026-07, API専用・クローズド) → **Qwen-Image-2.1 (2026-09-20, 7B, オープンウェイト)**
+- **Nombre oficial**: Qwen-Image-2.1 (variantes de escritura: "Qwen Image 2.1" / «千问图像2.1»)
+- **Desarrollador**: equipo Alibaba Qwen (laboratorio Tongyi de Hangzhou)
+- **Fecha de anuncio**: **2026-09-20** (según GitHub News; la documentación de licencia en HF es del mismo día)
+- **Posicionamiento**: «el modelo de generación de imágenes open source más potente de Qwen hasta la fecha». Unifica generación y edición en un solo modelo ("小模强效，创改一体")
+- **Linaje**: Qwen-Image (2025-08, 20B, Apache 2.0) → Edit-2509 (2025-09) → Edit-2511 / Qwen-Image-2512 / Layered (2025-12) → Qwen-Image-2.0 (2026-02, solo API) → Qwen-Image-3.0/3.0-Pro (2026-07, solo API, cerrado) → **Qwen-Image-2.1 (2026-09-20, 7B, open weights)**
 
-### 重要な注意点
-- ナンバリングが直感的でない: 3.0の方が新しいが非公開。オープンウェイト系列の最新が2.1
-- **ライセンスがApache 2.0ではなく「Qwen Research License Agreement」**（研究・評価目的の非商用のみ無償。商用は model-business@notice.qwencloud.com へ個別交渉。再配布時はライセンス同梱・帰属表示必須）
-- Alibaba Cloud 百炼APIには 2026-09-21時点で "qwen-image-2.1" は未掲載（リリース直後のため）
+### Advertencias importantes
+- La numeración no es intuitiva: 3.0 es más reciente pero es cerrado. El más reciente con pesos abiertos es 2.1
+- **La licencia NO es Apache 2.0, sino el "Qwen Research License Agreement"** (gratuito solo para fines no comerciales de investigación y evaluación; el uso comercial requiere negociación individual en model-business@notice.qwencloud.com; la redistribución exige adjuntar la licencia y la atribución)
+- En la API Bailian de Alibaba Cloud, a fecha de 2026-09-21 todavía no aparece "qwen-image-2.1 (por ser justo tras el lanzamiento)
 
-## 2. バリエーションと提供形態
+## 2. Variantes y formatos de publicación
 
-| モデル | 内容 | パラメータ |
+| Modelo | Contenido | Parámetros |
 |---|---|---|
-| Qwen/Qwen-Image-2.1 | 本体。生成＋編集の統一モデル | 7B |
-| Qwen/Qwen-Image-2.1-PE-T2I | 公式プロンプトリライター（生成用）。短い指示→詳細英語プロンプト＋`wh_ratio` | 9.4B (Qwen3.5-VL 9Bベース) |
-| Qwen/Qwen-Image-2.1-PE-I2I | 公式プロンプトリライター（編集用）。曖昧な指示→厳密な編集ディレクティブ | 同上 |
-| Comfy-Org/Qwen-Image-2.1 | ComfyUI用重みパック（Day-0対応） | — |
+| Qwen/Qwen-Image-2.1 | El modelo principal. Unifica generación + edición | 7B |
+| Qwen/Qwen-Image-2.1-PE-T2I | Reescritor de prompts oficial (para generación). Instrucciones cortas → prompt detallado en inglés + `wh_ratio` | 9.4B (basado en Qwen3.5-VL 9B) |
+| Qwen/Qwen-Image-2.1-PE-I2I | Reescritor de prompts oficial (para edición). Instrucciones ambiguas → directivas de edición estrictas | Ídem |
+| Comfy-Org/Qwen-Image-2.1 | Paquete de pesos para ComfyUI (soporte Day-0) | — |
 
-- Day-0対応フレームワーク: **Diffusers（推奨）**、ComfyUI、vLLM-Omni、SGLang、LightX2V
-- Turbo/蒸留版は現時点でなし
-- デモ: HF Spaces（Qwen/Qwen-Image-2.1）
+- Frameworks con soporte Day-0: **Diffusers (recomendado)**, ComfyUI, vLLM-Omni, SGLang, LightX2V
+- Por ahora no hay versión Turbo/destilada
+- Demo: HF Spaces (Qwen/Qwen-Image-2.1)
 
-## 3. 仕様・能力
+## 3. Especificaciones y capacidades
 
-### アーキテクチャ
-- 32層 Single-Stream DiT（最適化されたMMDiT）、7B
-- テキストエンコーダ: Qwen3-VL 8B / VAE: 64ch RGBA・16×圧縮
-- Flow Matching（Euler＋dynamic shifting）、Prefix KV Cache再利用、混合粒度注意
+### Arquitectura
+- Single-Stream DiT de 32 capas (MMDiT optimizado), 7B
+- Codificador de texto: Qwen3-VL 8B / VAE: RGBA de 64 canales, compresión 16×
+- Flow Matching (Euler + dynamic shifting), reutilización de Prefix KV Cache, atención de granularidad mixta
 
-### 機能（前世代からの新機能）
-1. **生成＋編集の統一**（Qwen-ImageとQwen-Image-Editが1つに）
-2. **ネイティブRGBA透明画像**（透明生成・透明レイヤー編集・被写体抽出）
-3. **最大10枚の参照画像入力**（複数人物合成、キャラ・商品・背景・スタイル参照。ComfyUIノードは16枚まで）
-4. **局所編集**: 円を描く・ペイント注釈・マスクで編集範囲指定（旧Edit系のネイティブControlNet相当はこの形式に置き換え）
-5. **人物・商品のアイデンティティ保持**
-6. **ネイティブ2K・高精細テキストレンダリング**（ポスター・タイポグラフィ・インフォグラフィック・パノラマ・絵コンテ）
+### Funciones nuevas respecto a la generación anterior
+1. **Unificación de generación + edición** (Qwen-Image y Qwen-Image-Edit en uno)
+2. **Imágenes RGBA transparentes nativas** (generación con transparencia, edición de capas transparentes, extracción de sujeto)
+3. **Hasta 10 imágenes de referencia como entrada** (composición de varias personas; referencias de personaje, producto, fondo y estilo. El nodo de ComfyUI admite hasta 16)
+4. **Edición local**: círculos, anotaciones con pintura o máscaras para delimitar la zona de edición (el equivalente al ControlNet nativo de los antiguos Edit se sustituye por esta forma)
+5. **Preservación de identidad de personas y productos**
+6. **2K nativo y renderizado de texto de alta definición** (pósters, tipografía, infografías, panorámicas, storyboards)
 
-### アスペクト比（幅×高さ・2K）
-| 比率 | 解像度 |
+### Relaciones de aspecto (ancho×alto, 2K)
+| Ratio | Resolución |
 |---|---|
 | 1:1 | 2048×2048 |
 | 4:3 / 3:4 | 2400×1792 / 1792×2400 |
 | 3:2 / 2:3 | 2528×1696 / 1696×2528 |
 | 16:9 / 9:16 | 2752×1536 / 1536×2752 |
 
-- デフォルト 2048×2048、40推論ステップ
-- PEリライターは上記7種に加え 2:1, 21:9, 9:21, 4:5, 3:1, 5:4, 1:3, 18:39, 9:20, 7:3, 9:5, 5:7 等を意味論的に選択し、パイプライン側で最も近い解像度にマップ
-- **diffusersは `negative_prompt` と `true_cfg_scale`（デフォルト4.0）をサポート**（true_cfg>1＋ネガ指定で有効化）。SGLang/vLLMの蒸留運用例は guidance 1 でネガなし
+- Valores por defecto: 2048×2048 y 40 pasos de inferencia
+- El reescritor PE selecciona semánticamente, además de esos 7 ratios, otros como 2:1, 21:9, 9:21, 4:5, 3:1, 5:4, 1:3, 18:39, 9:20, 7:3, 9:5, 5:7; el pipeline mapea al ratio más cercano
+- **Diffusers admite `negative_prompt` y `true_cfg_scale` (por defecto 4.0)** (se activan con true_cfg>1 más un negativo). En las recetas destiladas de SGLang/vLLM se usa guidance 1 sin negativo
 
 ---
 
-## 4. 公式プロンプトガイドの要点
+## 4. Puntos clave de la guía oficial de prompts
 
-単一の「プロンプトガイド」文書は存在しない。公式の指針は以下に分散:
-1. GitHub READMEの「Prompt Rewriting」セクション
-2. **PE-T2I / PE-I2I 各リポジトリ同梱の `system_prompt.txt`（事実上の公式プロンプトガイド本体）**
-3. モデルカードの透明画像テンプレート
+No existe un único documento de "guía de prompts". Las directrices oficiales están dispersas en:
+1. La sección "Prompt Rewriting" del README de GitHub
+2. **El `system_prompt.txt` incluido en los repositorios PE-T2I / PE-I2I (de facto, el verdadero cuerpo de la guía oficial de prompts)**
+3. La plantilla de imágenes transparentes de la model card
 
-### (A) 生成（T2I）— PE-T2I システムプロンプトから
+### (A) Generación (T2I) — a partir del system prompt de PE-T2I
 
-**基本方針**: 完成した画像を「観察者」の視点で描写する、**1つの長い英語段落（約20文・400〜500語）**。短い指示も長い指示も同じ分量に拡張される（短い指示=大部分を補完して発明）。
+**Principio básico**: describir la imagen terminada desde el punto de vista de un «observador», en **un único párrafo largo en inglés (unas 20 frases, 400–500 palabras)**. Tanto las instrucciones cortas como las largas se expanden al mismo tamaño (las cortas se completan inventando la mayor parte).
 
-8ステップ構成:
-1. **固定要素と自由要素を分離**: ユーザー指定のテキスト文字列・物体名・個数・色・位置・比率は**一字一句そのまま維持**。「使用上の注記」（"4Kでノイズなし"等）は描写に反映するが文言としてエコーしない
-2. **フレーム決定**: 比率は `wh_ratio` フィールドのみに記載し、**説明文中に比率・解像度・ピクセル数を書かない**。デフォルトは横物3:2・縦物2:3。1:1（バッジ・アイコン）、16:9（シネマ・プレゼン）、9:16（スマホ・縦バナー）等は意味論で選択
-3. **冒頭文（約20語）**: 「The image is a ⟨縦/横/正方形⟩ ⟨スタイル⟩ ⟨写真・ポスター・イラスト…⟩ of ⟨被写体⟩, ⟨背景とパレット⟩.」— メディア名詞は省略不可、スタイル語はここで一度だけ命名
-4. **インベントリ**: 全要素にフレーム内位置（upper-left, across the top, lower-third, in the centre…）を割り当て。**位置フレーズ8〜14個（目安10個）**、四隅・端・中央まで満遍なく
-5. **フレームウォーク**: レイアウト画像なら「背景→最上帯→本体（左→中央→右）→最下帯」。単一被写体なら「背景→配置→頭・顔→体・衣装→手持ち物→縁」。**文の約1/3は位置フレーズで開始**
-6. **テキスト設定**: 読み取れる文字はすべて読み順に `a bold black headline across the top reads "…"` の形で**直引用符**内に元スクリプトのまま（中国語は中国語のまま）記述。ウェイト・色・大小も指定。読ませない文字は "blurred, indistinct, too small to read"。チャートの軸・目盛り・凡例・セル値も書き出す。テキストなし画像は約3割あり、看板をでっち上げない
-7. **ライティング専用の一文**: "The lighting is …"（光源・方向・質、影とハイライト）
-8. **全体構図で締め**: "The overall composition ⟨is/uses/feels⟩ …" **1文だけ**
+Estructura en 8 pasos:
+1. **Separar elementos fijos y libres**: las cadenas de texto, nombres de objetos, cantidades, colores, posiciones y ratios especificados por el usuario se mantienen **literalmente, palabra por palabra**. Las «notas de uso» (p. ej. "en 4K sin ruido") se reflejan en la descripción pero no se repiten textualmente
+2. **Decidir el encuadre**: el ratio va solo en el campo `wh_ratio`; **no escribir ratios, resoluciones ni píxeles en el texto descriptivo**. Por defecto 3:2 horizontal y 2:3 vertical. 1:1 (badges, iconos), 16:9 (cine, presentaciones), 9:16 (móvil, banner vertical), etc. se eligen por semántica
+3. **Frase inicial (unas 20 palabras)**: «The image is a ⟨vertical/horizontal/cuadrada⟩ ⟨estilo⟩ ⟨foto/póster/ilustración…⟩ de ⟨sujeto⟩, ⟨fondo y paleta⟩». El sustantivo del medio es obligatorio; el término de estilo se nombra aquí una única vez
+4. **Inventario**: asignar a todos los elementos una posición en el encuadre (upper-left, across the top, lower-third, in the centre…). **8–14 frases posicionales (orientativo: 10)**, cubriendo esquinas, bordes y centro por igual
+5. **Recorrido del encuadre**: si es una imagen de maquetación, «fondo → franja superior → cuerpo (izquierda → centro → derecha) → franja inferior». Si es un sujeto único, «fondo → colocación → cabeza y rostro → cuerpo y vestuario → objetos en las manos → bordes». **Aproximadamente 1 de cada 3 frases empieza con una frase posicional**
+6. **Configuración del texto**: todo lo que se pueda leer se escribe en orden de lectura con la forma `a bold black headline across the top reads "…"`, con el texto original literal entre comillas de cita (el chino se mantiene en chino). Especificar también grosor, color y tamaño. Lo que no debe leerse: "blurred, indistinct, too small to read". Los ejes, marcas, leyendas y valores de celdas de gráficos también se describen. Un ~30% de las imágenes no llevan texto; no se inventan carteles
+7. **Una frase específica de iluminación**: "The lighting is …" (fuente, dirección, cualidad, sombras y altas luces)
+8. **Cerrar con la composición general**: "The overall composition ⟨is/uses/feels⟩ …" **solo una frase**
 
-**文体ルール**:
-- 現在形・三人称・宣言文。「you」「create」「make sure」禁止
-- **品質ブースター禁止**（"masterpiece", "8K", "highly detailed", "award-winning"）
-- 不確実なものはヘッジ（"appears to be"）。ユーザー固定要素にのみ断定
-- **色は修飾語付き**（deep navy, muted olive, pale cream）。Hexはユーザー指定時のみ
-- **材質まで書く**（brushed metal, matte plastic, frosted glass, weathered wood）
-- 「いくつかのアイテム」等の要約禁止。**列挙する**。小さい個数は単語で（three, five, twelve）
-- 人物は観察可能な表面で記述。**年齢は数値でなく人生段階**（a young adult, in her thirties）
-- ブランド名でなくクラスで（a silver laptop, a mirrorless camera）
-- 写真・デザイン語彙歓迎（shallow depth of field, bokeh, backlit, negative space）
-- 物理的整合性（影は光と逆方向、反射の一貫性）
-- **描写言語は常に英語**（依頼言語に関わらず）。画像内テキストのみ元スクリプト維持
-- 出力: `{"rewritten_prompt": "<描写>", "wh_ratio": "<例: 3:2>"}`
+**Reglas de estilo**:
+- Presente, tercera persona, frases declarativas. Prohibido «you», «create», «make sure»
+- **Prohibidos los quality boosters** ("masterpiece", "8K", "highly detailed", "award-winning")
+- Usar atenuantes en lo incierto ("appears to be"). Solo los elementos fijados por el usuario se afirman con certeza
+- **Los colores llevan modificadores** (deep navy, muted olive, pale cream). Los códigos hex solo si el usuario los especifica
+- **Describir materiales** (brushed metal, matte plastic, frosted glass, weathered wood)
+- Prohibido resumir con «algunos elementos»; **enumerar**. Las cantidades pequeñas se escriben en palabras (three, five, twelve)
+- Las personas se describen solo por lo observable. **La edad como etapa vital, no numérica** (a young adult, in her thirties)
+- Por clase, no por marca (a silver laptop, a mirrorless camera)
+- Bienvenida la terminología fotográfica y de diseño (shallow depth of field, bokeh, backlit, negative space)
+- Coherencia física (las sombras en dirección opuesta a la luz, reflejos consistentes)
+- **El idioma de la descripción es siempre el inglés** (independientemente del idioma de la petición). Solo el texto dentro de la imagen se mantiene en su escritura original
+- Salida: `{"rewritten_prompt": "<descripción>", "wh_ratio": "<ej.: 3:2>"}`
 
-### (B) 編集（I2I）— PE-I2I システムプロンプトから
+### (B) Edición (I2I) — a partir del system prompt de PE-I2I
 
-- **統轄原理「属性のもつれ解除（Attribute Disentanglement）」**: 指名した属性のみ強く明確に編集し、他は入力画像の忠実度で保持。失敗モードは「漏れ」と「過小編集」の対称的2つ。**保持は内容をロックするもので編集強度を抑えるものではない**
-- **保持対象は型・位置・役割で命名し、外観を再描写しない**（再描写すると生成指示として読まれてドリフト）。包括的保持節1つを優先
-- **アイデンティティは最難の不変量**: 顔・アクセサリ・製品意匠・レンダリング媒体は明示的に狙わない限り全編集で維持。参照画像由来のアイデンティティは**言葉で描述せず画像タグで指す**
-- **画像内テキストはリテラル**: 読める文字は出力に現れるなら全要素を引用符付きで正確にコミット。省略・要約禁止。読めない文字は追加しない
-- **複数画像参照の必須ルール**: N≥2では `<image1>`, `<image2>` …のタグ参照が**必須**（「图1」「the first image」等の自然言語参照は禁止）。単一画像ではタグを使わない。各画像の役割（キャンバス/素材提供元）を明示
-- **言語決定の2層化**: (A) 説明文の言語（中国語指示→中国語、英語→英語、その他→英語）と (B) **画像内に描画されるテキストの言語**（①ユーザー明示指定＞②入力画像のテキストの支配言語＞③指示言語）を混同しない。描画テキストは**モノリンガル必須**（混在禁止）
-- **出力サイズ**: `wh_ratio` と `ratio_follow`（"<image1>" 等の出力追従先）は排他。デフォルトは入力画像の比率に追従。「新規シーン生成」のみ意味論的に選択。比率キーワード対応表: 正方形/头像→1:1、横版/PPT→16:9、海报→2:3、证件照/小红书→3:4、全景→2:1、名片→9:5、A4→5:7/7:5、iPhone画面→18:39、Android→9:20、cinemascope→21:9。**"2K/4K/8K" は品質記述子であり比率判定に使わない**
-- **書式**: 改行なし単一段落。画像に描画する文字のみ二重引用符。**比率・解像度情報をプロンプト文中に含めない**。肯定形で記述（「禁止改变背景」でなく「保持背景不变」）。決定的に（ヘッジ禁止）
+- **Principio rector, «desentrelazado de atributos» (Attribute Disentanglement)**: editar con fuerza y claridad solo los atributos nombrados; mantener el resto con fidelidad a la imagen de entrada. Los modos de fallo son dos y simétricos: «fugas» y «sub-edición». **Mantener bloquea el contenido, no reduce la intensidad de la edición**
+- **Los objetos a preservar se nombran por tipo, posición y rol; no se redescriben** (redescribir se interpreta como instrucción de generación y provoca deriva). Preferir una única cláusula de preservación inclusiva
+- **La identidad es el invariante más difícil**: rostro, accesorios, diseño de producto y medio de render se mantienen en todas las ediciones salvo que se apunten explícitamente. La identidad proveniente de imágenes de referencia se señala **con etiquetas de imagen, no describiéndola con palabras**
+- **El texto dentro de la imagen es literal**: si los caracteres legibles deben aparecer en la salida, se garantizan todos con exactitud y entre comillas. Prohibido omitir o resumir. No añadir texto ilegible
+- **Regla obligatoria para referencias múltiples**: con N≥2, el uso de etiquetas `<image1>`, `<image2>`… es **obligatorio** (prohibidas las referencias en lenguaje natural tipo «图1» o «la primera imagen»). Con una sola imagen no se usan etiquetas. Explicitar el rol de cada imagen (lienzo / proveedor de material)
+- **Decisión del idioma en dos capas**: (A) el idioma de la instrucción explicativa (instrucción en chino → chino; en inglés → inglés; en otros idiomas → inglés) y (B) **el idioma del texto dibujado en la imagen** (① especificación explícita del usuario > ② idioma dominante del texto en la imagen de entrada > ③ idioma de la instrucción), sin confundirlos. El texto dibujado debe ser **monolingüe obligatoriamente** (sin mezclas)
+- **Tamaño de salida**: `wh_ratio` y `ratio_follow` (a qué salida seguir, p. ej. "<image1>") son excluyentes. Por defecto se sigue el ratio de la imagen de entrada. Solo la «generación de escena nueva» se elige semánticamente. Tabla de palabras clave de ratio: 正方形/头像→1:1, 横版/PPT→16:9, 海报→2:3, 证件照/小红书→3:4, 全景→2:1, 名片→9:5, A4→5:7/7:5, pantalla iPhone→18:39, Android→9:20, cinemascope→21:9. **"2K/4K/8K" son descriptores de calidad; no usarlos para el ratio**
+- **Formato**: un solo párrafo sin saltos de línea. Comillas dobles solo para el texto dibujado en la imagen. **No incluir ratios ni resoluciones en el texto del prompt**. Describir en positivo (en lugar de «禁止改变背景», «保持背景不变»). Con determinación (sin atenuantes)
 
-### (C) 透明画像（RGBA）公式テンプレート
+### (C) Plantilla oficial de imágenes transparentes (RGBA)
 
 > `This is an RGBA image with transparency. <your description>. The image has alpha channel and the background is transparent.`
 
-### (D) 公式推奨ワークフロー
+### (D) Flujo de trabajo recomendado oficialmente
 
-短いプロンプトはそのまま書かず、**PEリライターを通して詳細化してから QwenImage21Pipeline に渡す**（README「Prompt Rewriting」推奨）。リライター出力の `wh_ratio` を解像度表にマップし40ステップで生成。
+No escribir los prompts cortos tal cual: **pasarlos por el reescritor PE para detallarlos** y después entregarlos a QwenImage21Pipeline (recomendación del README, "Prompt Rewriting"). Mapear el `wh_ratio` de salida del reescritor a la tabla de resoluciones y generar con 40 pasos.
 
 ---
 
-## 5. コミュニティ知見（旧世代含む・適用バージョン明記）
+## 5. Conocimiento de la comunidad (incluye generaciones anteriores; versión de aplicación indicada)
 
-### 構造
-- **自然文推奨、SD式タグ羅列・`(red hair:1.5)` 重み付け構文は不可**（全系）→ "with vibrant, striking red hair" で強調
-- MMDiTは**トークン位置と具体性に重み**→被写体を文頭にFront-load。順序: Subject → Style → Details → Composition → Lighting（fal.ai, 2512）
-- 実測では構造化（"Subject: ..."）より**物語調の自然文**が高得点。正順で95%被写体明確（apiyi, 2512）
-- 長さ: **1〜3文が最適**の実測（31語>82語、生成も速い）。ポートレートは英語200語以内（公式ツール）
+### Estructura
+- **Prosa natural recomendada; las listas de tags estilo SD y la sintaxis de pesos `(red hair:1.5)` no funcionan** (todas las versiones) → enfatizar con "with vibrant, striking red hair"
+- El MMDiT **pondera la posición del token y la concreción** → poner el sujeto al principio. Orden: Sujeto → Estilo → Detalles → Composición → Iluminación (fal.ai, 2512)
+- En pruebas reales, la **prosa narrativa natural** puntúa mejor que la estructura ("Subject: …"). En orden directo, 95% de sujeto claro (apiyi, 2512)
+- Longitud: en pruebas reales, **1–3 frases es lo óptimo** (31 palabras > 82 palabras, y además genera más rápido). Retratos: menos de 200 palabras en inglés (herramienta oficial)
 
-### テキスト描画
-- **描きたい文字列は必ず二重引用符**（公式・コミュニティ全系一致）
-- 引用符のみで正確率85%、+CFG引き上げ+ステップ増で96%（ベースライン65%）
-- **大文字小写・句読点・改行・縦書き/横書きまで忠実に転写**される。プロンプト側の表記に従う
-- 書体・色・サイズ・呈示方式（ネオン/LED/印刷/刺繍/グラフィティ）まで指定
-- 複数テキストブロックは**各行・位置を個別に記述**
-- 暗黙の文字（「リストを表示」）は失敗。**具体文字列を提示**。締めに "No other text appears in the image." で混入防止
-- 中国語描画が最強（94.1）＞英語＞**日本語はT2I直接生成では崩れやすい**。回避策: 白地黒字テキスト画像を入力してEditで「忠実になぞる」指示（Zenn, 2509）
+### Dibujo de texto
+- **La cadena a dibujar siempre entre comillas dobles** (consenso oficial y comunitario en todas las versiones)
+- Solo con comillas: 85% de precisión; subiendo CFG y pasos se llega al 96% (base 65%)
+- **Mayúsculas, puntuación, saltos de línea y orientación vertical/horizontal se transcriben fielmente**, según lo escrito en el prompt
+- Especificar hasta tipografía, color, tamaño y forma de presentación (neón/LED/impreso/bordado/graffiti)
+- Varios bloques de texto: **describir línea a línea con posición individual**
+- El texto implícito («mostrar una lista») falla. **Dar la cadena literal concreta**. Cerrar con "No other text appears in the image." para evitar contaminación
+- El chino es lo que mejor dibuja (94.1) > inglés > **el japonés tiende a romperse en T2I directo**. Solución: introducir una imagen con texto negro sobre blanco y pedir en Edit que lo «trace fielmente» (Zenn, 2509)
 
-### 編集
-- 基本は**短い命令文**: "Change the background to a sunset beach"
-- **編集対象+保持対象をセットで**: "Replace X with Y. Keep original font, size, color, and perspective. Do not alter background."
-- **1回に詰め込まず2〜3の小さい編集に分割**してチェーン
-- 汎用キーワード: Replace X with Y / Add X / Remove X / Leave everything else unchanged / Rotate to show the back
+### Edición
+- Base: **frases imperativas cortas**: "Change the background to a sunset beach"
+- **Objetivo de edición + objeto a preservar en conjunto**: "Replace X with Y. Keep original font, size, color, and perspective. Do not alter background."
+- **No atestar: dividir en 2–3 ediciones pequeñas** y encadenarlas
+- Palabras clave genéricas: Replace X with Y / Add X / Remove X / Leave everything else unchanged / Rotate to show the back
 
-### 複数参照
-- 公式例は**空間的言語**で配置指定: "The magician bear is on the left, the alchemist bear is on the right, facing each other…"
-- 実用上「1枚目の部屋に…2枚目の画像で…」の番号+場所併記も機能（Zenn）
-- ※2.1のPE-I2Iは `<image1>` タグ参照を必須化（上記(B)）— 新公式規約
+### Referencias múltiples
+- Los ejemplos oficiales sitúan con **lenguaje espacial**: "The magician bear is on the left, the alchemist bear is on the right, facing each other…"
+- En la práctica también funciona numerar + posición: «en la habitación de la primera imagen… con la segunda imagen…» (Zenn)
+- ※ El PE-I2I de 2.1 exige las etiquetas `<image1>` (ver (B) arriba) — nueva norma oficial
 
-### カメラ・ライティング
+### Cámara e iluminación
 - "shot on Canon EOS R5, 85mm f/1.4 lens" + "professional photography, RAW format"
 - "Relight the scene with a warm key light from the right and cool rim light from the back. Keep pose and background unchanged."
-- 初代公式サフィックス: `, Ultra HD, 4K, cinematic composition.`
+- Sufijo oficial de la primera generación: `, Ultra HD, 4K, cinematic composition.`
 
-### 失敗パターンと回避策
-| 失敗パターン | 対象ver | 回避策 |
+### Patrones de fallo y cómo evitarlos
+| Patrón de fallo | Ver. afectada | Solución |
 |---|---|---|
-| タグ羅列・重み構文が効かない | 全系 | 自然文で強調 |
-| 被写体が曖昧 | 全系 | 被写体を文頭に、具体性を上げる |
-| 冗長で優先順位が崩れる | 2512系 | 1〜3文・31語級に圧縮 |
-| 矛盾するスタイル指定 | 2512系 | 主スタイル1つに絞る |
-| 曖昧語（"beautiful", "a list"） | 全系 | 具体値・具体文字列に置換 |
-| 文字の誤字・欠け | 全系 | 引用符+CFG 6〜8+ステップ35〜50。数字・記号は簡素化。中国語＞英語＞日本語の順で安定 |
-| 日本語テキスト破綻 | Edit-2509 | T2I直描せずテキスト画像をEditで「忠実になぞる」 |
-| 手・指の破綻 | 全系 | ネガ "extra fingers, deformed hands"＋肯定 "natural hand posture, five fingers"（60%→85%） |
-| 編集が全体を書き変える | Edit系 | "Keep everything else unchanged" 常時付与、1編集1指示 |
-| 顔・アイデンティティ崩れ | Edit系 | "Preserve face/clothing features" 明記 |
-| ネガティブが無視される | 蒸留運用 | guidance 1では非対応。true_cfg>1の実装で使う |
-| 出力がノイジー・ポーズが硬い | 2.1 | 公開直後の報告、確立した回避策なし（経過観察） |
+| Tags y sintaxis de pesos no funcionan | Todas | Enfatizar con prosa natural |
+| Sujeto ambiguo | Todas | Sujeto al inicio de la frase, más concreción |
+| Exceso de texto rompe prioridades | 2512 | Comprimir a 1–3 frases, ~31 palabras |
+| Estilos contradictorios | 2512 | Un solo estilo principal |
+| Palabras vagas ("beautiful", "a list") | Todas | Sustituir por valores y cadenas concretas |
+| Errores y caracteres faltantes | Todas | Comillas + CFG 6–8 + pasos 35–50. Simplificar dígitos y símbolos. Chino > inglés > japonés en estabilidad |
+| Texto japonés roto | Edit-2509 | No dibujarlo directo en T2I: trazar una imagen de texto con Edit «fielmente» |
+| Manos y dedos defectuosos | Todas | Negativo "extra fingers, deformed hands" + positivo "natural hand posture, five fingers" (60%→85%) |
+| La edición reescribe todo | Serie Edit | Añadir siempre "Keep everything else unchanged"; una edición por instrucción |
+| Rostro/identidad se degrada | Serie Edit | Indicar explícitamente "Preserve face/clothing features" |
+| Se ignora el negativo | Recetas destiladas | No compatible con guidance 1; usarlo con una implementación true_cfg>1 |
+| Salida ruidosa, pose rígida | 2.1 | Reportes de justo tras el lanzamiento; sin solución establecida (en observación) |
 
 ---
 
-## 6. 動作例プロンプト（原文・出典付き）
+## 6. Prompts de ejemplo (con fuente)
 
-### Qwen-Image-2.1 公式（2026-09-20）
-- テキスト描画: `A neon shop sign that reads "QWEN IMAGE 2.1", rainy night, reflections on wet pavement`
-- 編集: `Change the background to a sunset beach`
-- 編集（動き）: `Let this mascot dance under the moon`
-- 複数参照: `These three characters are sitting around a campfire in a forest`
-- 透明: `This is an RGBA image with transparency. A cute cartoon dragon sticker. The image has alpha channel and the background is transparent.`
+### Oficial Qwen-Image-2.1 (2026-09-20)
+- Dibujo de texto: `A neon shop sign that reads "QWEN IMAGE 2.1", rainy night, reflections on wet pavement`
+- Edición: `Change the background to a sunset beach`
+- Edición (movimiento): `Let this mascot dance under the moon`
+- Referencias múltiples: `These three characters are sitting around a campfire in a forest`
+- Transparencia: `This is an RGBA image with transparency. A cute cartoon dragon sticker. The image has alpha channel and the background is transparent.`
 - T2I: `A capybara reading a book by candlelight` / `A ceramic teapot on a wooden table`
-- Comfy公式: `Clean flat vector infographic titled "FROM CHERRY TO CUP" showing five numbered steps left to right`
+- Comfy oficial: `Clean flat vector infographic titled "FROM CHERRY TO CUP" showing five numbered steps left to right`
 
-### 初代Qwen-Image公式（テキスト描画の宝庫）
-- 書店ウィンドウ: `Bookstore window display. A sign displays "New Arrivals This Week". Below, a shelf tag with the text "Best-Selling Novels Here". To the side, a colorful poster advertises "Author Meet And Greet on Saturday" with a central portrait of the author. There are four books on the bookshelf, namely "The light between worlds" "When stars are scattered" "The slient patient" "The night circus"`
-- 映画ポスター: `A movie poster. The first row is the movie title, which reads "Imagination Unleashed". The second row is the movie subtitle, which reads "Enter a world beyond your imagination". The third row reads "Cast: Qwen-Image". … At the bottom edge, the text "Launching in the Cloud, August 2025" appears in bold, modern sans-serif font …`
-- 看板＋ネオン＋π: `A coffee shop entrance features a chalkboard sign reading "Qwen Coffee 😊 $2 per cup," with a neon light beside it displaying "通义千问". Next to it hangs a poster showing a beautiful Chinese woman, and beneath the poster is written "π≈3.1415926-53589793-23846264-33832795-02384197".`
+### Qwen-Image oficial de primera generación (mina de oro para texto)
+- Escaparate de librería: `Bookstore window display. A sign displays "New Arrivals This Week". Below, a shelf tag with the text "Best-Selling Novels Here". To the side, a colorful poster advertises "Author Meet And Greet on Saturday" with a central portrait of the author. There are four books on the bookshelf, namely "The light between worlds" "When stars are scattered" "The slient patient" "The night circus"`
+- Póster de película: `A movie poster. The first row is the movie title, which reads "Imagination Unleashed". The second row is the movie subtitle, which reads "Enter a world beyond your imagination". The third row reads "Cast: Qwen-Image". … At the bottom edge, the text "Launching in the Cloud, August 2025" appears in bold, modern sans-serif font …`
+- Encerado + neón + π: `A coffee shop entrance features a chalkboard sign reading "Qwen Coffee 😊 $2 per cup," with a neon light beside it displaying "通义千问". Next to it hangs a poster showing a beautiful Chinese woman, and beneath the poster is written "π≈3.1415926-53589793-23846264-33832795-02384197".`
 
-### 2512公式実装例（ネガティブ付き）
+### Ejemplo oficial 2512 (con negativo)
 - prompt: `A 20-year-old East Asian girl with delicate, charming features and large, bright brown eyes—expressive and lively... She stands indoors at an anime convention, surrounded by banners, posters, or stalls. Lighting is typical indoor illumination—no staged lighting—and the image resembles a casual iPhone snapshot...`
 - negative: `低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲。`
 
-### コミュニティ（Reddit プレイブック, 2025-08-27）
-- テキスト差し替え: `Replace the sign text with 'GRAND OPENING'. Keep original font, size, color, and perspective. Do not alter background or signboard.`
-- スタイル転送: `Re-render this scene in a Studio Ghibli art style. Preserve character identity, clothing, and layout.`
-- 赤枠部分編集: `Within the red box, replace the lower component of the character '稽' with '旨'. Match stroke thickness and calligraphy style. Leave everything else unchanged.`
-- ライティング: `Relight the scene with a warm key light from the right and cool rim light from the back. Keep pose and background unchanged.`
-- レンズ: `Render with a 35 mm lens, shallow depth of field, focus on subject's face. Preserve environment blur.`
-- 身維持転置: `Place the same character in a desert environment. Keep hairstyle, clothing, and facial features identical.`
+### Comunidad (playbook de Reddit, 2025-08-27)
+- Sustituir texto: `Replace the sign text with 'GRAND OPENING'. Keep original font, size, color, and perspective. Do not alter background or signboard.`
+- Transferencia de estilo: `Re-render this scene in a Studio Ghibli art style. Preserve character identity, clothing, and layout.`
+- Edición en zona marcada en rojo: `Within the red box, replace the lower component of the character '稽' with '旨'. Match stroke thickness and calligraphy style. Leave everything else unchanged.`
+- Iluminación: `Relight the scene with a warm key light from the right and cool rim light from the back. Keep pose and background unchanged.`
+- Lente: `Render with a 35 mm lens, shallow depth of field, focus on subject's face. Preserve environment blur.`
+- Traslado con identidad preservada: `Place the same character in a desert environment. Keep hairstyle, clothing, and facial features identical.`
 
-### 日本語テキスト（Zenn, 2025-10-01, Edit-2509）
-- 習字変換: `画像に書かれたテキストを習字風のフォントに変換してください。1画ごとの配置を忠実になぞり、抜け漏れがないようにしてください。左下に、赤い四角形の「通义千问」という印をつけてください`
-- 絵の置換（番号参照実例）: `1枚目の部屋に飾られている絵について、額縁は残して、その内部を2枚目の画像で表す文字に置き換えてください。フォントは入力されたゴシック体ではなく、習字のような行書体に変更してください。最後に、赤い四角のハンコを絵の左下端に加えてください`
+### Texto japonés (Zenn, 2025-10-01, Edit-2509)
+- Conversión a caligrafía: `画像に書かれたテキストを習字風のフォントに変換してください。1画ごとの配置を忠実になぞり、抜け漏れがないようにしてください。左下に、赤い四角形の「通义千问」という印をつけてください`
+- Sustitución de cuadro (ejemplo con referencia numerada): `1枚目の部屋に飾られている絵について、額縁は残して、その内部を2枚目の画像で表す文字に置き換えてください。フォントは入力されたゴシック体ではなく、習字のような行書体に変更してください。最後に、赤い四角のハンコを絵の左下端に加えてください`
 
 ---
 
-## 7. 情報源一覧
+## 7. Lista de fuentes
 
-### 公式
-| 種別 | URL | 日付 |
+### Oficiales
+| Tipo | URL | Fecha |
 |---|---|---|
-| 公式ブログ（中） | https://qwen.ai/blog?id=qwen-image-2.1 | 2026-09-20 |
+| Blog oficial (zh) | https://qwen.ai/blog?id=qwen-image-2.1 | 2026-09-20 |
 | GitHub | https://github.com/QwenLM/Qwen-Image-2.1 | 2026-09-20 |
-| HF モデルカード | https://huggingface.co/Qwen/Qwen-Image-2.1 | 2026-09-20 |
-| PE-T2I（system_prompt.txt同梱） | https://huggingface.co/Qwen/Qwen-Image-2.1-PE-T2I | 2026-09-20 |
-| PE-I2I（system_prompt.txt同梱） | https://huggingface.co/Qwen/Qwen-Image-2.1-PE-I2I | 2026-09-20 |
-| HF デモ | https://huggingface.co/spaces/Qwen/Qwen-Image-2.1 | — |
-| ComfyUI 公式 | https://blog.comfy.org/p/qwen-image-21-in-comfyui-open-weight | 2026-09-20 |
-| diffusers PR（true_cfg） | https://github.com/huggingface/diffusers/pull/14804 | 2026-09-20 |
-| vLLM レシピ | https://recipes.vllm.ai/Qwen/Qwen-Image-2.1 | — |
-| SGLang クックブック | https://docs.sglang.io/cookbook/diffusion/Qwen-Image/Qwen-Image-2.1 | — |
-| 初代Qwen-Imageブログ | https://qwenlm.github.io/blog/qwen-image/ | 2025-08-04 |
-| QwenLM/Qwen-Image README＋公式拡張ツール prompt_utils_2512.py | https://github.com/QwenLM/Qwen-Image | 2025-08〜2026-02 |
+| Model card HF | https://huggingface.co/Qwen/Qwen-Image-2.1 | 2026-09-20 |
+| PE-T2I (incluye system_prompt.txt) | https://huggingface.co/Qwen/Qwen-Image-2.1-PE-T2I | 2026-09-20 |
+| PE-I2I (incluye system_prompt.txt) | https://huggingface.co/Qwen/Qwen-Image-2.1-PE-I2I | 2026-09-20 |
+| Demo HF | https://huggingface.co/spaces/Qwen/Qwen-Image-2.1 | — |
+| ComfyUI oficial | https://blog.comfy.org/p/qwen-image-21-in-comfyui-open-weight | 2026-09-20 |
+| PR de diffusers (true_cfg) | https://github.com/huggingface/diffusers/pull/14804 | 2026-09-20 |
+| Receta vLLM | https://recipes.vllm.ai/Qwen/Qwen-Image-2.1 | — |
+| Cookbook de SGLang | https://docs.sglang.io/cookbook/diffusion/Qwen-Image/Qwen-Image-2.1 | — |
+| Blog Qwen-Image 1.ª gen | https://qwenlm.github.io/blog/qwen-image/ | 2025-08-04 |
+| README QwenLM/Qwen-Image + herramienta oficial prompt_utils_2512.py | https://github.com/QwenLM/Qwen-Image | 2025-08~2026-02 |
 | Edit-2509 HF | https://huggingface.co/Qwen/Qwen-Image-Edit-2509 | 2025-09-22 |
 | Edit-2511 HF | https://huggingface.co/Qwen/Qwen-Image-Edit-2511 | 2025-12-23 |
 
-### コミュニティ
-| 種別 | URL | 日付 |
+### Comunidad
+| Tipo | URL | Fecha |
 |---|---|---|
-| Reddit プレイブック | https://www.reddit.com/r/StableDiffusion/comments/1n1n81o/ | 2025-08-27 |
-| Reddit 2.1初期テスト | https://www.reddit.com/r/StableDiffusion/comments/1wkvqlj/ | 2026-09-19 |
-| fal.ai 2512ガイド | https://fal.ai/learn/devs/qwen-image-2512-text-to-image-prompt-guide | 2026-01-07 |
-| apiyi 実測23ケース | https://help.apiyi.com/en/qwen-image-2512-prompt-guide-test-cases-en.html | 2026-01-18 |
-| Zenn 日本語描画 | https://zenn.dev/kota_iizuka/articles/33219ebb8aff99 | 2025-10-01 |
-| Zenn 攻略ガイド | https://zenn.dev/rick_lyric/articles/ffd10bbb59e8b6 | 2025-11-22 |
+| Playbook de Reddit | https://www.reddit.com/r/StableDiffusion/comments/1n1n81o/ | 2025-08-27 |
+| Primeras pruebas de 2.1 en Reddit | https://www.reddit.com/r/StableDiffusion/comments/1wkvqlj/ | 2026-09-19 |
+| Guía 2512 de fal.ai | https://fal.ai/learn/devs/qwen-image-2512-text-to-image-prompt-guide | 2026-01-07 |
+| apiyi: 23 casos de prueba | https://help.apiyi.com/en/qwen-image-2512-prompt-guide-test-cases-en.html | 2026-01-18 |
+| Zenn: dibujo de japonés | https://zenn.dev/kota_iizuka/articles/33219ebb8aff99 | 2025-10-01 |
+| Zenn: guía avanzada | https://zenn.dev/rick_lyric/articles/ffd10bbb59e8b6 | 2025-11-22 |
 
 ---
 
-## 8. スキル構成案への示唆
+## 8. Implicaciones para el diseño de la skill
 
-1. **中核はPE-T2I/PE-I2Iのsystem_prompt.txtの翻案** — 公式の「理想的プロンプト」仕様が全て書かれている。ただし2モードで方針が対立する部分があります（T2I=400〜500語の長文観察描写 vs コミュニティ実測=1〜3文が最適、編集=短い命令文）。スキルでは「用途別に使い分ける」構成に
-2. **SKILL.mdはルーティング＋共通原則に薄く**、詳細はreferences/に分割（progressive disclosure）
-3. 画像内テキスト描画（引用符規約・日本語の注意）、編集の保持節、複数参照の `<image1>` タグ規約、RGBAテンプレート、アスペクト比表は必須コンテンツ
-4. プロンプト出力は**英語で生成**（公式仕様）。スキルの説明文は日本語で良い
-5. 免責: ライセンスが非商用（Qwen Research License）である点をREADMEに明記すべき
+1. **El núcleo es la adaptación de los system_prompt.txt de PE-T2I/PE-I2I** — contienen toda la especificación oficial del «prompt ideal». Pero hay directrices opuestas entre los dos modos (T2I = descripción observacional larga de 400–500 palabras vs. pruebas comunitarias = 1–3 frases óptimas; Edición = imperativos cortos). La skill debe «elegir según el uso»
+2. **SKILL.md fino, solo enrutado + principios comunes**, con el detalle dividido en references/ (progressive disclosure)
+3. Contenidos imprescindibles: dibujo de texto (convención de comillas, cuidado con el japonés), cláusula de preservación en edición, convención de etiquetas `<image1>` para referencias múltiples, plantilla RGBA y tabla de ratios de aspecto
+4. El prompt de salida se **genera en inglés** (especificación oficial). El texto explicativo de la skill puede estar en otro idioma
+5. Descargo: el README debe indicar que la licencia es no comercial (Qwen Research License)

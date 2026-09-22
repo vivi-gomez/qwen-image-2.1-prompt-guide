@@ -66,7 +66,8 @@ Direct text-to-image generation of Japanese is the weakest script (Chinese ≫ E
 
 1. Generate the exact Japanese text as a simple image (black text on white).
 2. Feed it to an edit pass with an instruction like:
-   `画像に書かれたテキストを忠実に再現してください。1画ごとの配置を崩さず、抜け漏れがないようにしてください` — i.e. "reproduce the text from the image faithfully, tracing every stroke, with no omissions", then place it (e.g. "place it inside the picture frame in <image1>, in a calligraphy style").
+   `画像に書かれたテキストを忠実に再現してください。1画ごとの配置を崩さず、抜け漏れがないようにしてください`
+   — i.e. "reproduce the text from the image faithfully, tracing every stroke, with no omissions" [English gloss of the Japanese instruction above], then place it (e.g. "place it inside the picture frame in <image1>, in a calligraphy style").
 
 The edit path traces input text far more faithfully than the generation path invents it. Chinese text, by contrast, can be demanded directly with high fidelity.
 

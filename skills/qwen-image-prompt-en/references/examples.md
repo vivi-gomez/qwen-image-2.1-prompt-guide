@@ -34,12 +34,13 @@ the text "Launching in the Cloud, August 2025" appears in bold, modern
 sans-serif font …
 ```
 
-Mixed media on a storefront (chalk + neon + poster + digits):
+Mixed media on a storefront (chalk + neon + poster + digits). The in-image strings stay in their original script — `"通义千问"` renders as-is (it is the Qwen brand name in Chinese); keep it unchanged when adapting:
 
 ```text
 A coffee shop entrance features a chalkboard sign reading "Qwen Coffee 😊 $2 per
-cup," with a neon light beside it displaying "通义千问". Next to it hangs a poster
-showing a beautiful Chinese woman, and beneath the poster is written
+cup," with a neon light beside it displaying "通义千问" [Tongyi Qianwen — the Chinese
+name of Tongyi Qwen]. Next to it hangs a poster showing a beautiful Chinese woman,
+and beneath the poster is written
 "π≈3.1415926-53589793-23846264-33832795-02384197".
 ```
 
@@ -79,8 +80,9 @@ perspective. Do not alter background or signboard.
 Re-render this scene in a Studio Ghibli art style. Preserve character identity,
 clothing, and layout.
 
-Within the red box, replace the lower component of the character '稽' with '旨'.
-Match stroke thickness and calligraphy style. Leave everything else unchanged.
+Within the red box, replace the lower component of the character '稽' [the Chinese
+character jī] with '旨' [zhǐ]. Match stroke thickness and calligraphy style.
+Leave everything else unchanged.
 
 Relight the scene with a warm key light from the right and cool rim light from
 the back. Keep pose and background unchanged.
@@ -100,11 +102,15 @@ shot on Canon EOS R5, 85mm f/1.4 lens, professional photography, RAW format
                                                omit for 2.1 (quality boosters discouraged)
 ```
 
-Negative prompt that shipped with an official 2512 portrait example:
+Negative prompt that shipped with an official 2512 portrait example (keep the original Chinese string for the model; English gloss provided only for reference):
 
 ```text
 低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，
 画面具有AI感。构图混乱。文字模糊，扭曲。
+
+[English gloss: Low resolution, low image quality, deformed limbs, deformed
+fingers, oversaturated image, waxy look, faces lacking detail, overly smooth,
+image with an AI feel. Cluttered composition. Blurred, distorted text.]
 ```
 
 ## Japanese-text workaround (Zenn, Edit-2509, 2025-10-01)
@@ -115,6 +121,10 @@ Convert rendered text to calligraphy, tracing strokes exactly (instruction itsel
 画像に書かれたテキストを習字風のフォントに変換してください。1画ごとの配置を忠実に
 なぞり、抜け漏れがないようにしてください。左下に、赤い四角形の「通义千问」という
 印をつけてください
+
+[English gloss: Convert the text written in the image into a calligraphy-style
+font. Trace the placement of every stroke faithfully, with nothing missing or
+left out. At the bottom left, add a red square seal reading "通义千问".]
 ```
 
 Composite a text image into a room picture using numbered references:
@@ -123,6 +133,12 @@ Composite a text image into a room picture using numbered references:
 1枚目の部屋に飾られている絵について、額縁は残して、その内部を2枚目の画像で表す文字に
 置き換えてください。フォントは入力されたゴシック体ではなく、習字のような行書体に変更
 してください。最後に、赤い四角のハンコを絵の左下端に加えてください
+
+[English gloss: Regarding the picture hanging in the room in the first image,
+keep the picture frame and replace its interior with the characters depicted in
+the second image. Change the font from the input gothic style to a semi-cursive
+calligraphy style, like brush writing. Finally, add a red square seal-stamp at
+the bottom-left edge of the picture.]
 ```
 
 ## Source index
